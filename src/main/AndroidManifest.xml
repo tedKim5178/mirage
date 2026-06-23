@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <!--
+          Auto-registered into the host app via manifest merging. Authority is namespaced by the
+          host's applicationId so it never collides across apps. The provider arms Mirage only on
+          debuggable builds (see MirageAutoInstaller).
+        -->
+        <provider
+            android:name="com.hyundai.airlab.mirage.MirageAutoInstaller"
+            android:authorities="${applicationId}.mirage"
+            android:exported="false" />
+    </application>
+</manifest>
