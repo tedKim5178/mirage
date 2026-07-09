@@ -6,9 +6,9 @@ plugins {
     id("maven-publish")
 }
 
-// Published as com.github.tedKim5178:mirage. group/version also let a consumer do
-// includeBuild("../mirage") for local dev (Gradle substitutes by group:name).
-group = "com.github.tedKim5178"
+// Published by JitPack (multi-module) as com.github.tedKim5178.mirage:mirage. group/version also let
+// a consumer do includeBuild("../mirage") for local dev (Gradle substitutes by group:name).
+group = "com.github.tedKim5178.mirage"
 version = "1.1.1"
 
 android {
@@ -66,7 +66,7 @@ afterEvaluate {
         publications {
             create<MavenPublication>("release") {
                 from(components["release"])
-                groupId = "com.github.tedKim5178"
+                groupId = "com.github.tedKim5178.mirage"
                 artifactId = "mirage"
                 version = "1.1.1"
             }

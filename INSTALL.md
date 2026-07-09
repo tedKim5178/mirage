@@ -38,9 +38,13 @@ maven { url = uri("https://jitpack.io") }
 in Step 2 — they go in *that* module's `build.gradle.kts`, because that's where `Mirage.interceptor`
 is referenced.)
 ```kotlin
-implementation("com.github.tedKim5178:mirage:1.1.1")            // engine
-debugImplementation("com.github.tedKim5178:mirage-debug:1.1.1") // installer + HTTP control server
+implementation("com.github.tedKim5178.mirage:mirage:1.1.1")            // engine
+debugImplementation("com.github.tedKim5178.mirage:mirage-debug:1.1.1") // installer + HTTP control server
 ```
+(The group is `com.github.tedKim5178.mirage` — JitPack serves a multi-module repo as
+`com.github.<user>.<repo>:<module>`, so the repo name is part of the group, and the artifact is the
+module name.)
+
 The engine (`mirage`) is `implementation` because the interceptor is referenced from main code guarded
 by `BuildConfig.DEBUG` (R8 strips it from release). The installer + control server (`mirage-debug`) are
 `debugImplementation`, so they are compiled into the app's debug build only and are **absent from
@@ -109,8 +113,8 @@ then `curl`).
 | Change | Where |
 |---|---|
 | JitPack repo (if missing) | `settings.gradle.kts` |
-| `implementation("com.github.tedKim5178:mirage:1.1.1")` | build.gradle.kts of the channel module |
-| `debugImplementation("com.github.tedKim5178:mirage-debug:1.1.1")` | build.gradle.kts of the channel module |
+| `implementation("com.github.tedKim5178.mirage:mirage:1.1.1")` | build.gradle.kts of the channel module |
+| `debugImplementation("com.github.tedKim5178.mirage:mirage-debug:1.1.1")` | build.gradle.kts of the channel module |
 | `if (BuildConfig.DEBUG) intercept(Mirage.interceptor)` + import | the channel-building class |
 | `mirage-mock/SKILL.md` | `.claude/skills/mirage-mock/` |
 

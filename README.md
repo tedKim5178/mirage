@@ -34,8 +34,8 @@ Nothing else for you to do.
 2. **Dependencies** — in the build.gradle.kts of the module that builds your gRPC channel. Two
    artifacts: the engine (always) and the debug-only tooling (server + installer):
    ```kotlin
-   implementation("com.github.tedKim5178:mirage:1.1.1")            // engine
-   debugImplementation("com.github.tedKim5178:mirage-debug:1.1.1") // installer + HTTP control server
+   implementation("com.github.tedKim5178.mirage:mirage:1.1.1")            // engine
+   debugImplementation("com.github.tedKim5178.mirage:mirage-debug:1.1.1") // installer + HTTP control server
    ```
 3. **One line** — where you build your `ManagedChannel`, guarded to debug:
    ```kotlin

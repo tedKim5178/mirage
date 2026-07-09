@@ -6,10 +6,10 @@ plugins {
     id("maven-publish")
 }
 
-// Published as com.github.tedKim5178:mirage-debug. Consumers add it with debugImplementation(), so
-// the installer + control server (and nanohttpd) are compiled into the app's debug build only and
-// are entirely absent from release.
-group = "com.github.tedKim5178"
+// Published by JitPack (multi-module) as com.github.tedKim5178.mirage:mirage-debug. Consumers add it
+// with debugImplementation(), so the installer + control server (and nanohttpd) are compiled into the
+// app's debug build only and are entirely absent from release.
+group = "com.github.tedKim5178.mirage"
 version = "1.1.1"
 
 android {
@@ -56,7 +56,7 @@ afterEvaluate {
         publications {
             create<MavenPublication>("release") {
                 from(components["release"])
-                groupId = "com.github.tedKim5178"
+                groupId = "com.github.tedKim5178.mirage"
                 artifactId = "mirage-debug"
                 version = "1.1.1"
             }
