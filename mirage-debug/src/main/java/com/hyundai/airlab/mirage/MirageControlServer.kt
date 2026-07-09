@@ -10,8 +10,8 @@ import fi.iki.elonen.NanoHTTPD
  * (`adb forward tcp:8080 tcp:8080` on Android, `iproxy 8080 8080` on iOS) and is invisible on Wi-Fi.
  * That keeps it USB-only by construction — no LAN exposure, and no iOS Local Network permission.
  *
- * This class lives in the `debug` source set, so it is compiled into the **debug variant only** and
- * is entirely absent from release builds (not merely guarded at runtime).
+ * This class ships in the `mirage-debug` artifact (added via `debugImplementation`), so it is
+ * compiled into the app's **debug build only** and is entirely absent from release.
  *
  * Routes (URL segment uses the file-style key, `service__Method`):
  * - `GET    /mirage/corpus`         → captured endpoint keys, one per line

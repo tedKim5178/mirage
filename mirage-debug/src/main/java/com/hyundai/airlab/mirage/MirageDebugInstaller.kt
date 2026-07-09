@@ -10,10 +10,11 @@ import fi.iki.elonen.NanoHTTPD
 import java.io.File
 
 /**
- * Zero-touch debug installer. Lives in the `debug` source set, so it — and everything it starts — is
- * compiled into the **debug variant only** and is absent from release builds.
+ * Zero-touch debug installer. Ships in the `mirage-debug` artifact, which consumers add with
+ * `debugImplementation`, so it — and everything it starts — is compiled into the app's **debug build
+ * only** and is absent from release.
  *
- * Registered via this source set's manifest, so a consuming app needs no startup code. Android calls
+ * Registered via this module's manifest, so a consuming app needs no startup code. Android calls
  * [onCreate] before `Application.onCreate`. On a debuggable host it:
  * 1. enables corpus capture under the on-device dir (real responses are recorded for grounding), and
  * 2. starts the [MirageControlServer] so mocks can be injected over HTTP (`curl`) — the same

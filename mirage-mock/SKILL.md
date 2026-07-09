@@ -142,7 +142,8 @@ the obvious one — the corpus tells you the truth.)
 ## Cautions
 
 - **Debug only.** The Mirage interceptor is attached only in debug builds, and the control server
-  lives in the library's debug variant only — release is unaffected and never even contains it.
+  ships in the `mirage-debug` artifact (added via `debugImplementation`) — release is unaffected and
+  never even contains it.
 - **Loopback only.** The server binds to `127.0.0.1`, so it's reachable only through the USB
   port-forward — not over Wi-Fi. Always `adb forward` first.
 - **The corpus contains real PII (names / phones / emails).** Treat it as internal debug data only;

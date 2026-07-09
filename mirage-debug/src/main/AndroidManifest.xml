@@ -2,9 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!--
-      Debug source set only → merges into the host app's DEBUG variant, never release.
-      Auto-registers the installer, which points Mirage at the on-device dir and starts the
-      HTTP control server. Authority is namespaced by the host applicationId.
+      This is the mirage-debug artifact's manifest. Consumers add mirage-debug via
+      debugImplementation, so this provider merges into the app's DEBUG build only, never release.
+      Auto-registers the installer, which enables corpus capture and starts the HTTP control server.
+      Authority is namespaced by the host applicationId.
     -->
     <application>
         <provider

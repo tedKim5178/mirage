@@ -31,20 +31,23 @@ Nothing else for you to do.
    ```kotlin
    repositories { maven { url = uri("https://jitpack.io") } }
    ```
-2. **Dependency** — in the build.gradle.kts of the module that builds your gRPC channel:
+2. **Dependencies** — in the build.gradle.kts of the module that builds your gRPC channel. Two
+   artifacts: the engine (always) and the debug-only tooling (server + installer):
    ```kotlin
-   implementation("com.github.tedKim5178:mirage:1.1.0")
+   implementation("com.github.tedKim5178:mirage:1.1.1")            // engine
+   debugImplementation("com.github.tedKim5178:mirage-debug:1.1.1") // installer + HTTP control server
    ```
 3. **One line** — where you build your `ManagedChannel`, guarded to debug:
    ```kotlin
    channelBuilder.apply { if (BuildConfig.DEBUG) intercept(Mirage.interceptor) }
    ```
 
-That's all the code. A `ContentProvider` in the library's **debug variant** auto-registers via
-manifest merging and starts Mirage (engine + HTTP control server) at startup — **no `Application`
-change, no manifest entry, no init call.** The installer and control server ship in the debug variant
-only, so they are entirely absent from release builds; the interceptor line is already guarded by
-`BuildConfig.DEBUG`.
+That's all the code. The `mirage-debug` artifact ships a `ContentProvider` that auto-registers via
+manifest merging and starts Mirage (corpus capture + HTTP control server) at startup — **no
+`Application` change, no manifest entry, no init call.** Because `mirage-debug` is a
+`debugImplementation`, the installer and control server are compiled into your **debug build only**
+and are entirely absent from release. The engine (`mirage`) is `implementation`, but in release the
+interceptor is only referenced from a `BuildConfig.DEBUG` branch, so R8 strips it.
 
 ## Your first mock
 
@@ -78,7 +81,8 @@ curl -sL https://raw.githubusercontent.com/tedKim5178/mirage/main/mirage-mock/SK
 - **In-memory.** Mocks are held in memory (injected over HTTP), so they clear on app restart.
 - **Off = `DELETE` the mock.**
 - **Debug only.** The interceptor is only attached under `BuildConfig.DEBUG`; the installer + control
-  server exist in the debug variant only and self-limit to a debuggable host build.
+  server live in the `debugImplementation`-only `mirage-debug` artifact and self-limit to a debuggable
+  host build, so release ships nothing runnable.
 - **Corpus holds real responses (incl. PII).** Internal debug use only; never ship or send corpus
   contents to an external service unmasked.
 

@@ -34,16 +34,18 @@ anything is ambiguous, ask the human the one specific question rather than guess
 maven { url = uri("https://jitpack.io") }
 ```
 
-**1b. Add the dependency to the module that builds the gRPC channel.** (You locate that module in
-Step 2 — the dependency goes in *that* module's `build.gradle.kts`, because that's where
-`Mirage.interceptor` is referenced.)
+**1b. Add the two dependencies to the module that builds the gRPC channel.** (You locate that module
+in Step 2 — they go in *that* module's `build.gradle.kts`, because that's where `Mirage.interceptor`
+is referenced.)
 ```kotlin
-implementation("com.github.tedKim5178:mirage:1.1.0")
+implementation("com.github.tedKim5178:mirage:1.1.1")            // engine
+debugImplementation("com.github.tedKim5178:mirage-debug:1.1.1") // installer + HTTP control server
 ```
-Use `implementation` (not `debugImplementation`): the interceptor is referenced from main code guarded
-by `BuildConfig.DEBUG`. Mirage's installer and control server live in the library's debug variant, so
-they are absent from release entirely; only the (dormant) engine code links into release. Mirage pulls
-in nothing heavy — `grpc`/`protobuf` are `compileOnly`, so it reuses the app's existing versions.
+The engine (`mirage`) is `implementation` because the interceptor is referenced from main code guarded
+by `BuildConfig.DEBUG` (R8 strips it from release). The installer + control server (`mirage-debug`) are
+`debugImplementation`, so they are compiled into the app's debug build only and are **absent from
+release entirely**. Mirage pulls in nothing heavy — `grpc`/`protobuf` are `compileOnly`, so it reuses
+the app's existing versions.
 
 ---
 
@@ -70,9 +72,9 @@ channelBuilder.apply { if (BuildConfig.DEBUG) intercept(Mirage.interceptor) }
 - If the builder isn't a fluent chain you can `.apply { … }` on, just call `channelBuilder.intercept(Mirage.interceptor)` (debug-guarded) wherever the builder is configured before `build()`.
 
 **That's all the code.** There is **no** init call, **no** `Application` change, and **no** manifest
-edit: Mirage's **debug** AAR ships a `ContentProvider` that auto-registers via manifest merging and,
-at startup, initializes the engine and starts the HTTP control server. It self-disables on
-non-debuggable builds, and is absent from the release variant entirely.
+edit: the `mirage-debug` artifact ships a `ContentProvider` that auto-registers via manifest merging
+and, at startup, enables corpus capture and starts the HTTP control server. It self-disables on
+non-debuggable builds, and — being `debugImplementation` — is absent from release entirely.
 
 ---
 
@@ -107,7 +109,8 @@ then `curl`).
 | Change | Where |
 |---|---|
 | JitPack repo (if missing) | `settings.gradle.kts` |
-| `implementation("com.github.tedKim5178:mirage:1.1.0")` | build.gradle.kts of the channel module |
+| `implementation("com.github.tedKim5178:mirage:1.1.1")` | build.gradle.kts of the channel module |
+| `debugImplementation("com.github.tedKim5178:mirage-debug:1.1.1")` | build.gradle.kts of the channel module |
 | `if (BuildConfig.DEBUG) intercept(Mirage.interceptor)` + import | the channel-building class |
 | `mirage-mock/SKILL.md` | `.claude/skills/mirage-mock/` |
 

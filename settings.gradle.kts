@@ -13,4 +13,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "mirage"
+rootProject.name = "mirage-lib"
+
+include(":mirage", ":mirage-debug")
