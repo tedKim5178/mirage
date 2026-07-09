@@ -14,10 +14,9 @@ import java.util.concurrent.Executors
  * channelBuilder.apply { if (BuildConfig.DEBUG) intercept(Mirage.interceptor) }
  * ```
  *
- * Call [init] once at app startup (debug only): mocks are then read fresh from [mockDir] on each
- * call (edit a file → applies from the next RPC, no restart), and real responses are captured into
- * [corpusDir] for grounding. A mock present short-circuits the real server; everything else passes
- * through and is captured.
+ * Call [init] once at app startup (debug only) to enable corpus capture under [corpusDir]. Mocks are
+ * injected at runtime over the debug HTTP control server (in memory); a mock present short-circuits
+ * the real server, while everything else passes through and is captured for grounding.
  */
 object Mirage {
 
@@ -37,9 +36,8 @@ object Mirage {
         captureExecutor = captureExecutor,
     )
 
-    /** Point the store at [mockDir] (read per call) and enable corpus capture under [corpusDir]. */
-    fun init(mockDir: File, corpusDir: File) {
-        store.fileDir = mockDir
+    /** Enable corpus capture under [corpusDir]. */
+    fun init(corpusDir: File) {
         corpus = CorpusStore(corpusDir)
     }
 }

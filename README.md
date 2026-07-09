@@ -1,9 +1,9 @@
 # Mirage — runtime gRPC mock engine
 
-Mirage lets **debug builds** override specific unary gRPC responses at runtime by dropping a JSON
-file on the device — no rebuild, no app restart. Default behavior is the real server; only RPCs that
-have a mock file are overridden. Real responses passing through are captured into a *corpus* so mocks
-can be grounded on real data instead of hallucinated.
+Mirage lets **debug builds** override specific unary gRPC responses at runtime by injecting a mock
+over a small on-device HTTP endpoint — no rebuild. Default behavior is the real server; only RPCs
+that have an active mock are overridden. Real responses passing through are captured into a *corpus*
+so mocks can be grounded on real data instead of hallucinated.
 
 It's a tiny, **app-agnostic** library: it operates on `io.grpc.MethodDescriptor` + protobuf at
 runtime and has no dependency on any specific app.
@@ -33,17 +33,18 @@ Nothing else for you to do.
    ```
 2. **Dependency** — in the build.gradle.kts of the module that builds your gRPC channel:
    ```kotlin
-   implementation("com.github.tedKim5178:mirage:1.0.0")
+   implementation("com.github.tedKim5178:mirage:1.1.0")
    ```
 3. **One line** — where you build your `ManagedChannel`, guarded to debug:
    ```kotlin
    channelBuilder.apply { if (BuildConfig.DEBUG) intercept(Mirage.interceptor) }
    ```
 
-That's all the code. A debug-guarded `ContentProvider` bundled in the library auto-registers via
-manifest merging and initializes Mirage at startup — **no `Application` change, no manifest entry, no
-init call.** Mirage stays completely dormant in release builds. (Want it fully absent from release?
-Put your channel-attach code in a debug source set and use `debugImplementation`.)
+That's all the code. A `ContentProvider` in the library's **debug variant** auto-registers via
+manifest merging and starts Mirage (engine + HTTP control server) at startup — **no `Application`
+change, no manifest entry, no init call.** The installer and control server ship in the debug variant
+only, so they are entirely absent from release builds; the interceptor line is already guarded by
+`BuildConfig.DEBUG`.
 
 ## Your first mock
 
@@ -52,9 +53,9 @@ Put your channel-attach code in a debug source set and use `debugImplementation`
    grounded on, so it looks real.
 2. **Ask.** Tell your AI in plain language: *"show this screen as if a card is registered."* Using the
    bundled `mirage-mock` skill, it finds the right RPC from the corpus, writes the mock JSON, and
-   `adb`-pushes it to the device.
-3. **See it.** Refresh / re-enter the screen → it now shows the mocked state. To revert, delete the
-   file (or just say *"turn the mock off"*).
+   injects it over the control server (`curl` after `adb forward tcp:8080 tcp:8080`).
+3. **See it.** Refresh / re-enter the screen → it now shows the mocked state. To revert, `DELETE` the
+   mock (or just say *"turn the mock off"*).
 
 No AI agent or device handy? The exact same workflow done by hand is in
 [`mirage-mock/SKILL.md`](mirage-mock/SKILL.md).
@@ -72,11 +73,12 @@ curl -sL https://raw.githubusercontent.com/tedKim5178/mirage/main/mirage-mock/SK
 ## What is / isn't supported
 
 - **Unary only.** Server/bidi-streaming always passes through (not mockable). Polling ≈ repeated
-  unary and is handled by the per-call file read.
-- **Per-call read.** Editing/pushing a mock file applies from the next RPC — no restart.
-- **Off = delete the file.**
-- **Debug only.** The interceptor is only attached under `BuildConfig.DEBUG`; the auto-installer only
-  arms on a debuggable host build.
+  unary and is served the same mock each call.
+- **Applies from the next RPC.** A `PUT` takes effect immediately — no restart.
+- **In-memory.** Mocks are held in memory (injected over HTTP), so they clear on app restart.
+- **Off = `DELETE` the mock.**
+- **Debug only.** The interceptor is only attached under `BuildConfig.DEBUG`; the installer + control
+  server exist in the debug variant only and self-limit to a debuggable host build.
 - **Corpus holds real responses (incl. PII).** Internal debug use only; never ship or send corpus
   contents to an external service unmasked.
 

@@ -7,7 +7,7 @@
 > > https://raw.githubusercontent.com/tedKim5178/mirage/main/INSTALL.md"
 >
 > The agent then performs every step below itself. Mirage is a **debug-only gRPC mock engine**: it
-> overrides specific unary gRPC responses at runtime from a JSON file on the device.
+> overrides specific unary gRPC responses at runtime, injected over a small on-device HTTP endpoint.
 
 You (the agent) make **three changes**, all of which you can do by inspecting the project — the human
 should not have to hand you file paths. Discover them, make the edits, then build to verify. If
@@ -38,11 +38,12 @@ maven { url = uri("https://jitpack.io") }
 Step 2 — the dependency goes in *that* module's `build.gradle.kts`, because that's where
 `Mirage.interceptor` is referenced.)
 ```kotlin
-implementation("com.github.tedKim5178:mirage:1.0.0")
+implementation("com.github.tedKim5178:mirage:1.1.0")
 ```
 Use `implementation` (not `debugImplementation`): the interceptor is referenced from main code guarded
-by `BuildConfig.DEBUG`, and Mirage stays completely dormant in release anyway. Mirage pulls in nothing
-heavy — `grpc`/`protobuf` are `compileOnly`, so it reuses the app's existing versions.
+by `BuildConfig.DEBUG`. Mirage's installer and control server live in the library's debug variant, so
+they are absent from release entirely; only the (dormant) engine code links into release. Mirage pulls
+in nothing heavy — `grpc`/`protobuf` are `compileOnly`, so it reuses the app's existing versions.
 
 ---
 
@@ -69,8 +70,9 @@ channelBuilder.apply { if (BuildConfig.DEBUG) intercept(Mirage.interceptor) }
 - If the builder isn't a fluent chain you can `.apply { … }` on, just call `channelBuilder.intercept(Mirage.interceptor)` (debug-guarded) wherever the builder is configured before `build()`.
 
 **That's all the code.** There is **no** init call, **no** `Application` change, and **no** manifest
-edit: Mirage ships a debug-guarded `ContentProvider` inside its AAR that auto-registers via manifest
-merging and initializes the engine at startup. It self-disables on non-debuggable builds.
+edit: Mirage's **debug** AAR ships a `ContentProvider` that auto-registers via manifest merging and,
+at startup, initializes the engine and starts the HTTP control server. It self-disables on
+non-debuggable builds, and is absent from the release variant entirely.
 
 ---
 
@@ -91,11 +93,12 @@ curl -sL https://raw.githubusercontent.com/tedKim5178/mirage/main/mirage-mock/SK
 Build the app's **debug** variant (pick the real task name from the project — e.g.
 `./gradlew :app:assembleDebug`, or a flavored one like `:app:assembleDevDebug`). Confirm it compiles
 and packages. Optionally check the merged debug manifest contains
-`com.hyundai.airlab.mirage.MirageAutoInstaller` (proof the auto-installer merged from the AAR).
+`com.hyundai.airlab.mirage.MirageDebugInstaller` (proof the debug installer merged from the AAR).
 
 Then tell the human: Mirage is installed. At runtime (debug), real responses are auto-captured into a
-corpus under the app's external files dir, and they can ask you to mock any screen state from natural
-language using `mirage-mock/SKILL.md`.
+corpus, and they can ask you to mock any screen state from natural language using
+`mirage-mock/SKILL.md` (mocks are injected over the control server — `adb forward tcp:8080 tcp:8080`,
+then `curl`).
 
 ---
 
@@ -104,9 +107,9 @@ language using `mirage-mock/SKILL.md`.
 | Change | Where |
 |---|---|
 | JitPack repo (if missing) | `settings.gradle.kts` |
-| `implementation("com.github.tedKim5178:mirage:1.0.0")` | build.gradle.kts of the channel module |
+| `implementation("com.github.tedKim5178:mirage:1.1.0")` | build.gradle.kts of the channel module |
 | `if (BuildConfig.DEBUG) intercept(Mirage.interceptor)` + import | the channel-building class |
 | `mirage-mock/SKILL.md` | `.claude/skills/mirage-mock/` |
 
-Everything else (startup init, the mock/corpus directory, the provider registration) is handled by the
-published library itself.
+Everything else (startup init, the control server, the corpus directory, the provider registration) is
+handled by the published library itself.

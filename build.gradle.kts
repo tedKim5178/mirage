@@ -6,6 +6,12 @@ plugins {
     id("maven-publish")
 }
 
+// Project coordinates. These make composite builds work: when a consumer does
+// includeBuild("../mirage"), Gradle substitutes any "com.github.tedKim5178:mirage"
+// dependency with this local build by matching group:name (version is ignored).
+group = "com.github.tedKim5178"
+version = "1.1.0"
+
 android {
     namespace = "com.hyundai.airlab.mirage"
     compileSdk = 36
@@ -19,9 +25,11 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    // Flavor-agnostic single variant + a sources jar for consumers.
+    // Publish BOTH variants so a consumer's debug build variant-matches the debug AAR (which carries
+    // the control server + installer from src/debug), while release matches the clean engine-only AAR.
     publishing {
-        singleVariant("release") {
+        multipleVariants("all") {
+            allVariants()
             withSourcesJar()
         }
     }
@@ -45,6 +53,9 @@ dependencies {
 
     implementation("com.jakewharton.timber:timber:5.0.1")
 
+    // Debug-only HTTP control server — present in the debug variant only, never release.
+    debugImplementation("org.nanohttpd:nanohttpd:2.3.1")
+
     testImplementation("io.grpc:grpc-api:1.76.0")
     testImplementation("com.google.protobuf:protobuf-java:4.33.0")
     testImplementation("com.google.protobuf:protobuf-java-util:4.33.0")
@@ -55,15 +66,16 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
-// JitPack publishes the 'release' AAR (+ sources) as com.github.tedKim5178:mirage:<tag>.
+// JitPack publishes both variants (Gradle module metadata) as com.github.tedKim5178:mirage:<tag>;
+// consumers variant-match debug↔debug (server included) and release↔release (engine only).
 afterEvaluate {
     publishing {
         publications {
-            create<MavenPublication>("release") {
-                from(components["release"])
+            create<MavenPublication>("all") {
+                from(components["all"])
                 groupId = "com.github.tedKim5178"
                 artifactId = "mirage"
-                version = "1.0.0"
+                version = "1.1.0"
             }
         }
     }

@@ -31,6 +31,12 @@ class CorpusStore(
     fun samplesFor(endpointKey: String, limit: Int = 3): List<String> =
         readSamples(fileFor(endpointKey)).takeLast(limit).reversed() // most recent first
 
+    /** Endpoint keys (gRPC method names) that have captured samples. */
+    fun keys(): List<String> =
+        (dir.listFiles { f -> f.isFile && f.name.endsWith(".jsonl") } ?: emptyArray())
+            .map { it.name.removeSuffix(".jsonl").replace("__", "/") }
+            .sorted()
+
     private fun fileFor(endpointKey: String): File =
         File(dir, endpointKey.replace("/", "__") + ".jsonl")
 
