@@ -38,7 +38,7 @@ maven { url = uri("https://jitpack.io") }
 Step 2 — the dependency goes in *that* module's `build.gradle.kts`, because that's where
 `Mirage.interceptor` is referenced.)
 ```kotlin
-implementation("com.github.tedKim5178:mirage:1.0.0")
+implementation("com.github.tedKim5178:mirage:1.2.0")
 ```
 Use `implementation` (not `debugImplementation`): the interceptor is referenced from main code guarded
 by `BuildConfig.DEBUG`, and Mirage stays completely dormant in release anyway. Mirage pulls in nothing
@@ -72,6 +72,17 @@ channelBuilder.apply { if (BuildConfig.DEBUG) intercept(Mirage.interceptor) }
 edit: Mirage ships a debug-guarded `ContentProvider` inside its AAR that auto-registers via manifest
 merging and initializes the engine at startup. It self-disables on non-debuggable builds.
 
+**2c. (Only if the app uses the rich error model) register its error-detail proto.** This enables
+*typed* error mocks (`$mirageError` envelopes whose `details` carry the app's custom error proto —
+see the skill). Check whether the app unpacks a custom proto from gRPC error details:
+`grep -rn "StatusProto.fromThrowable" --include='*.kt'` — the converter it leads to unpacks some
+proto (e.g. `commonv1.ErrorInfo`). If found, add one debug-guarded line next to the interceptor line:
+```kotlin
+if (BuildConfig.DEBUG) Mirage.registerErrorDetailTypes(ErrorInfo.getDefaultInstance())
+```
+(using that proto's generated class). If the app has no such converter, skip this — `code`-only
+error mocks work with no registration.
+
 ---
 
 ## Step 3 — Install the mock-authoring skill (optional but recommended)
@@ -104,8 +115,9 @@ language using `mirage-mock/SKILL.md`.
 | Change | Where |
 |---|---|
 | JitPack repo (if missing) | `settings.gradle.kts` |
-| `implementation("com.github.tedKim5178:mirage:1.0.0")` | build.gradle.kts of the channel module |
+| `implementation("com.github.tedKim5178:mirage:1.2.0")` | build.gradle.kts of the channel module |
 | `if (BuildConfig.DEBUG) intercept(Mirage.interceptor)` + import | the channel-building class |
+| `registerErrorDetailTypes(...)` (only rich-error-model apps) | next to the interceptor line |
 | `mirage-mock/SKILL.md` | `.claude/skills/mirage-mock/` |
 
 Everything else (startup init, the mock/corpus directory, the provider registration) is handled by the
