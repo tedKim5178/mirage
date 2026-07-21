@@ -69,6 +69,22 @@ curl -sL https://raw.githubusercontent.com/tedKim5178/mirage/main/mirage-mock/SK
   -o .claude/skills/mirage-mock/SKILL.md
 ```
 
+## Error mocks
+
+A mock file whose JSON is a `$mirageError` envelope makes the RPC **fail** instead of succeed — so
+error dialogs, retry flows, and typed error UI can be tested too:
+
+```json
+{"$mirageError": {"code": "UNAVAILABLE", "message": "server maintenance"}}
+```
+
+Add a `details` array (`@type` + fields, the rich error model) and it is delivered on the standard
+`grpc-status-details-bin` trailer byte-identically to a real server failure, so the app's typed
+error mapping (custom exceptions) fires. App-specific detail protos are registered with one
+debug-only line: `Mirage.registerErrorDetailTypes(ErrorInfo.getDefaultInstance())`. Real failures
+are auto-captured to `corpus/<key>.errors.jsonl` as ready-to-reuse envelopes. Details in
+[`mirage-mock/SKILL.md`](mirage-mock/SKILL.md).
+
 ## What is / isn't supported
 
 - **Unary only.** Server/bidi-streaming always passes through (not mockable). Polling ≈ repeated

@@ -42,12 +42,16 @@ dependencies {
     compileOnly("io.grpc:grpc-api:1.76.0")
     compileOnly("com.google.protobuf:protobuf-java:4.33.0")
     compileOnly("com.google.protobuf:protobuf-java-util:4.33.0")
+    // google.rpc.Status & standard error-detail protos, for error mocks. Any app using the rich
+    // error model (io.grpc.protobuf.StatusProto) already ships this via grpc-protobuf.
+    compileOnly("com.google.api.grpc:proto-google-common-protos:2.51.0")
 
     implementation("com.jakewharton.timber:timber:5.0.1")
 
     testImplementation("io.grpc:grpc-api:1.76.0")
     testImplementation("com.google.protobuf:protobuf-java:4.33.0")
     testImplementation("com.google.protobuf:protobuf-java-util:4.33.0")
+    testImplementation("com.google.api.grpc:proto-google-common-protos:2.51.0")
 
     // JUnit BOM keeps jupiter + platform-launcher versions aligned (fixes engine-discovery mismatch).
     testImplementation(platform("org.junit:junit-bom:6.0.0"))
@@ -63,7 +67,7 @@ afterEvaluate {
                 from(components["release"])
                 groupId = "com.github.tedKim5178"
                 artifactId = "mirage"
-                version = "1.0.0"
+                version = "1.2.0"
             }
         }
     }
