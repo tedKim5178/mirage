@@ -67,7 +67,7 @@ afterEvaluate {
                 from(components["release"])
                 groupId = "com.github.tedKim5178"
                 artifactId = "mirage"
-                version = "1.2.0"
+                version = "1.2.1"
             }
         }
     }

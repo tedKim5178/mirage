@@ -38,7 +38,7 @@ maven { url = uri("https://jitpack.io") }
 Step 2 — the dependency goes in *that* module's `build.gradle.kts`, because that's where
 `Mirage.interceptor` is referenced.)
 ```kotlin
-implementation("com.github.tedKim5178:mirage:1.2.0")
+implementation("com.github.tedKim5178:mirage:1.2.1")
 ```
 Use `implementation` (not `debugImplementation`): the interceptor is referenced from main code guarded
 by `BuildConfig.DEBUG`, and Mirage stays completely dormant in release anyway. Mirage pulls in nothing
@@ -84,6 +84,7 @@ grep -rn "StatusProto.fromThrowable" --include='*.kt' --include='*.java' .
       // …intercept(Mirage.interceptor) from 2b
   }
   ```
+  (`getDefaultInstance()` and `getDescriptor()` are both accepted.)
 
 **That's all the code** (2b's interceptor line, plus 2c's registration when the check hit). There is
 **no** init call, **no** `Application` change, and **no** manifest edit: Mirage ships a debug-guarded
@@ -131,7 +132,7 @@ corpus under the app's external files dir, and they can ask you to mock any scre
 | Change | Where |
 |---|---|
 | JitPack repo (if missing) | `settings.gradle.kts` |
-| `implementation("com.github.tedKim5178:mirage:1.2.0")` | build.gradle.kts of the channel module |
+| `implementation("com.github.tedKim5178:mirage:1.2.1")` | build.gradle.kts of the channel module |
 | `if (BuildConfig.DEBUG) intercept(Mirage.interceptor)` + import | the channel-building class |
 | `registerErrorDetailTypes(...)` (only rich-error-model apps) | next to the interceptor line |
 | `mirage-mock/SKILL.md` | `.claude/skills/mirage-mock/` |

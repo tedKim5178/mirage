@@ -79,16 +79,23 @@ object Mirage {
 
     /**
      * Registers the app's error-detail proto(s) so `$mirageError.details` (and `Any` fields in
-     * success mocks) can be written as typed JSON with an `@type`. One debug-only line in the app:
+     * success mocks) can be written as typed JSON with an `@type`. One debug-only line in the app —
+     * both forms are accepted:
      *
      * ```
      * if (BuildConfig.DEBUG) Mirage.registerErrorDetailTypes(ErrorInfo.getDefaultInstance())
+     * if (BuildConfig.DEBUG) Mirage.registerErrorDetailTypes(ErrorInfo.getDescriptor())
      * ```
      *
      * Not needed for code-only error mocks or the `detailsBin` (base64 replay) form.
      */
     fun registerErrorDetailTypes(vararg messages: Message) {
-        messages.forEach { registeredDescriptors.add(it.descriptorForType) }
+        registerErrorDetailTypes(*messages.map { it.descriptorForType }.toTypedArray())
+    }
+
+    /** Same, from descriptors — so `getDefaultInstance()` and `getDescriptor()` both work. */
+    fun registerErrorDetailTypes(vararg descriptors: Descriptors.Descriptor) {
+        registeredDescriptors.addAll(descriptors)
         typeRegistry = TypeRegistry.newBuilder().add(registeredDescriptors).build()
     }
 }
