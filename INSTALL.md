@@ -68,20 +68,27 @@ channelBuilder.apply { if (BuildConfig.DEBUG) intercept(Mirage.interceptor) }
 - **Do not touch the data layer / repositories / DI.** The only change is this one line at channel-build time.
 - If the builder isn't a fluent chain you can `.apply { … }` on, just call `channelBuilder.intercept(Mirage.interceptor)` (debug-guarded) wherever the builder is configured before `build()`.
 
-**That's all the code.** There is **no** init call, **no** `Application` change, and **no** manifest
-edit: Mirage ships a debug-guarded `ContentProvider` inside its AAR that auto-registers via manifest
-merging and initializes the engine at startup. It self-disables on non-debuggable builds.
-
-**2c. (Only if the app uses the rich error model) register its error-detail proto.** This enables
-*typed* error mocks (`$mirageError` envelopes whose `details` carry the app's custom error proto —
-see the skill). Check whether the app unpacks a custom proto from gRPC error details:
-`grep -rn "StatusProto.fromThrowable" --include='*.kt'` — the converter it leads to unpacks some
-proto (e.g. `commonv1.ErrorInfo`). If found, add one debug-guarded line next to the interceptor line:
-```kotlin
-if (BuildConfig.DEBUG) Mirage.registerErrorDetailTypes(ErrorInfo.getDefaultInstance())
+**2c. Check for the rich error model — do NOT skip this check.** Run:
+```bash
+grep -rn "StatusProto.fromThrowable" --include='*.kt' --include='*.java' .
 ```
-(using that proto's generated class). If the app has no such converter, skip this — `code`-only
-error mocks work with no registration.
+- **No hits** → the app doesn't unpack typed error details; nothing to do, continue to the wrap-up
+  below. (`code`-only error mocks still work with no registration.)
+- **Hit(s)** → the app maps a custom error proto to typed exceptions/UI. Open the file the grep leads
+  to and find which proto it unpacks from the error details (e.g. `commonv1.ErrorInfo`). Then
+  register that proto so *typed* error mocks (`$mirageError` envelopes — see the skill) can carry it,
+  by adding one line **inside the same debug guard as the interceptor** (import the generated class):
+  ```kotlin
+  if (BuildConfig.DEBUG) {
+      Mirage.registerErrorDetailTypes(ErrorInfo.getDefaultInstance()) // the proto found above
+      // …intercept(Mirage.interceptor) from 2b
+  }
+  ```
+
+**That's all the code** (2b's interceptor line, plus 2c's registration when the check hit). There is
+**no** init call, **no** `Application` change, and **no** manifest edit: Mirage ships a debug-guarded
+`ContentProvider` inside its AAR that auto-registers via manifest merging and initializes the engine
+at startup. It self-disables on non-debuggable builds.
 
 ---
 
@@ -104,9 +111,18 @@ Build the app's **debug** variant (pick the real task name from the project — 
 and packages. Optionally check the merged debug manifest contains
 `com.hyundai.airlab.mirage.MirageAutoInstaller` (proof the auto-installer merged from the AAR).
 
+Before reporting done, self-check every box:
+
+- [ ] dependency added in the **channel module** (not blindly in `:app`)
+- [ ] `intercept(Mirage.interceptor)` added, debug-guarded (2b)
+- [ ] **the 2c grep was actually run**, and if it hit, `registerErrorDetailTypes(...)` is in place —
+      if you cannot show the grep output, go back and do 2c now
+- [ ] skill installed (Step 3)
+- [ ] debug build succeeded
+
 Then tell the human: Mirage is installed. At runtime (debug), real responses are auto-captured into a
-corpus under the app's external files dir, and they can ask you to mock any screen state from natural
-language using `mirage-mock/SKILL.md`.
+corpus under the app's external files dir, and they can ask you to mock any screen state — including
+**error states** — from natural language using `mirage-mock/SKILL.md`.
 
 ---
 
